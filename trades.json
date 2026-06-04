@@ -1418,5 +1418,17 @@
     "status": "Open",
     "timestamp": "2026-06-04T17:45:16.562Z",
     "profit": 0
+  },
+  {
+    "id": "signal_1780595254194_sjyldd",
+    "account": "25449835",
+    "masterAccNum": "25449835",
+    "symbol": "AUDUSD",
+    "type": "SELL",
+    "lot": 0.01,
+    "masterLot": 0.01,
+    "status": "Open",
+    "timestamp": "2026-06-04T17:47:34.194Z",
+    "profit": 0
   }
 ]
