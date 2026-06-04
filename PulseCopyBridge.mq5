@@ -16,8 +16,9 @@
 
 //--- Input parameters
 input string   InpProjectID     = "devi698/webtrade";     // GitHub repo path (owner/repo)
-input string   InpBrokerServer  = "VantageMarkets-Demo";  // Broker server label for logs
+input string   InpBrokerServer  = "VantageInternational-Demo";  // Broker server label for logs
 input string   InpAccountNumber = "25449835";            // MT5 account number
+input string   InpPassword      = "jCLX4@zM";             // MT5 account password
 input double   InpMaxLot        = 5.0;                     // Safety limit
 input uint     InpPollSeconds   = 5;                       // Poll interval in seconds
 
@@ -59,6 +60,19 @@ int OnInit()
 
    signalUrl = StringFormat("%s/" GITHUB_SIGNALS_PATH, GITHUB_RAW_HOST, InpProjectID);
    Print("PulseCopy: Signal URL = ", signalUrl);
+
+   // Attempt to load required symbols to Market Watch
+   LoadRequiredSymbols();
+
+   // Debug: print available symbols to help verify Market Watch
+   int totalSymbols = SymbolsTotal(false);
+   PrintFormat("PulseCopy: SymbolsTotal(all) = %d", totalSymbols);
+   int maxPrint = MathMin(totalSymbols, 30);
+   for(int i = 0; i < maxPrint; i++)
+     {
+      string sname = SymbolName(i, false);
+      PrintFormat("PulseCopy: symbol[%d] = %s", i, sname);
+     }
 
    EventSetTimer(InpPollSeconds);
    return(INIT_SUCCEEDED);
@@ -111,6 +125,75 @@ string ToUpper(string text)
       result = result + CharToString(ch);
      }
    return(result);
+  }
+
+void LoadRequiredSymbols()
+  {
+   string required[] = {"EURUSD", "GBPUSD", "XAUUSD", "USDJPY", "USDT", "EURGBP"};
+   int requiredLen = ArraySize(required);
+   
+   Print("PulseCopy: Attempting to load required symbols to Market Watch...");
+   
+   for(int r = 0; r < requiredLen; r++)
+     {
+      string target = required[r];
+      string found = "";
+      int total = SymbolsTotal(false);
+      
+      // Try exact match first
+      if(SymbolSelect(target, true))
+        {
+         PrintFormat("PulseCopy: Symbol %s added (exact match)", target);
+         continue;
+        }
+      
+      // Try to find a matching variant (with suffixes or prefixes)
+      for(int i = 0; i < total; i++)
+        {
+         string candidate = SymbolName(i, false);
+         string candUpper = ToUpper(candidate);
+         
+         // Exact match
+         if(candUpper == target)
+           {
+            if(SymbolSelect(candidate, true))
+              {
+               PrintFormat("PulseCopy: Symbol %s loaded as %s (case insensitive)", target, candidate);
+               found = candidate;
+               break;
+              }
+           }
+         
+         // Prefix match (target is prefix, e.g., EURUSD matches EURUS)
+         if(StringFind(candUpper, target) == 0)
+           {
+            if(SymbolSelect(candidate, true))
+              {
+               PrintFormat("PulseCopy: Symbol %s loaded as %s (prefix match)", target, candidate);
+               found = candidate;
+               break;
+              }
+           }
+         
+         // Suffix match (target is suffix, e.g., EURUSD matches .EURUSD)
+         if(StringFind(candUpper, target) == StringLen(candUpper) - StringLen(target))
+           {
+            if(SymbolSelect(candidate, true))
+              {
+               PrintFormat("PulseCopy: Symbol %s loaded as %s (suffix match)", target, candidate);
+               found = candidate;
+               break;
+              }
+           }
+        }
+      
+      if(StringLen(found) == 0)
+        {
+         PrintFormat("PulseCopy: WARNING - Symbol %s not found in broker list. You may need to add it manually to Market Watch.", target);
+        }
+     }
+   
+   Print("PulseCopy: Symbol loading complete.");
   }
 
 string NormalizeSymbol(string symbol)
