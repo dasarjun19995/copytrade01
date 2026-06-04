@@ -244,16 +244,25 @@ bool FetchSignals(string &json)
    ArrayFree(result);
    Print("DEBUG: Arrays cleared");
 
-   string url = signalUrl + "?cb=" + (string)(TimeCurrent());
+   // Try without cache buster first, with explicit Accept-Encoding
+   string url = signalUrl;
    Print("DEBUG: URL constructed: ", url);
    Print("PulseCopy: requesting URL ", url);
    
    Print("DEBUG: About to call WebRequest...");
    // Request with Accept-Encoding: identity to prevent gzip compression
-   string requestHeaders = "Content-Type: application/json\r\nAccept-Encoding: identity\r\n";
+   string requestHeaders = "Accept-Encoding: gzip, deflate\r\n";
    int res = WebRequest("GET", url, requestHeaders, 10000, data, result, headers);
    Print("DEBUG: WebRequest returned with code: ", res);
    Print("PulseCopy: WebRequest result=", res);
+   
+   // Check if response is gzip-compressed
+   if(ArraySize(result) > 2 && result[0] == 0x1f && result[1] == 0x8b)
+     {
+      Print("DEBUG: WARNING - Response is gzip-compressed (magic bytes detected)");
+      Print("DEBUG: This may be due to server configuration or MQL5 limitation.");
+      Print("DEBUG: Attempting to parse as-is (may fail if truly compressed)");
+     }
 
    if(res != 200)
      {
@@ -262,19 +271,20 @@ bool FetchSignals(string &json)
      }
 
    Print("DEBUG: Converting result array to string...");
-   // Handle gzip-compressed response from GitHub
-   // Check if response starts with gzip magic number (0x1f 0x8b)
-   if(ArraySize(result) > 2 && result[0] == 0x1f && result[1] == 0x8b)
-     {
-      Print("DEBUG: Response is gzip-compressed, decompressing...");
-      // Simple gzip detection; for proper decompression, we'd need a library
-      // For now, warn user and attempt plain conversion
-      Print("DEBUG: WARNING - Gzip response detected. Some MT5 builds may not handle this.");
-     }
    ArrayResize(result, ArraySize(result) + 1);
    result[ArraySize(result) - 1] = 0;
    json = CharArrayToString(result, 0, WHOLE_ARRAY);
    Print("DEBUG: Conversion complete, json length=", StringLen(json));
+   
+   // Validate JSON starts with '[' (array marker)
+   if(StringLen(json) > 0 && StringGetCharacter(json, 0) != '[' && StringGetCharacter(json, 0) != '{')
+     {
+      Print("PulseCopy: ERROR - Response does not appear to be valid JSON!");
+      Print("PulseCopy: First 50 chars: ", StringSubstr(json, 0, 50));
+      Print("PulseCopy: This usually means the response is gzip-compressed.");
+      Print("PulseCopy: SOLUTION: Contact broker support or try different MT5 build.");
+      return(false);
+     }
    
    if(StringLen(json) == 0)
      {
