@@ -1598,5 +1598,17 @@
     "status": "Open",
     "timestamp": "2026-06-04T20:10:13.293Z",
     "profit": 0
+  },
+  {
+    "id": "signal_1780603825764_rbspcc",
+    "account": "25449835",
+    "masterAccNum": "25449835",
+    "symbol": "XAUUSD",
+    "type": "SELL",
+    "lot": 0.01,
+    "masterLot": 0.01,
+    "status": "Open",
+    "timestamp": "2026-06-04T20:10:25.764Z",
+    "profit": 0
   }
 ]
