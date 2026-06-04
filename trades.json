@@ -1430,5 +1430,17 @@
     "status": "Open",
     "timestamp": "2026-06-04T17:47:34.194Z",
     "profit": 0
+  },
+  {
+    "id": "signal_1780595713025_doke9b",
+    "account": "25449835",
+    "masterAccNum": "25449835",
+    "symbol": "AUDUSD",
+    "type": "SELL",
+    "lot": 0.01,
+    "masterLot": 0.01,
+    "status": "Open",
+    "timestamp": "2026-06-04T17:55:13.025Z",
+    "profit": 0
   }
 ]
