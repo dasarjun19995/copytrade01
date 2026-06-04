@@ -341,11 +341,16 @@ double JsonGetDouble(const string json, const string key, int startPos=0)
 int FindNextOpenSignal(const string response)
   {
    int currentPos = 0;
+   int matchCount = 0;
+   PrintFormat("DEBUG: FindNextOpenSignal searching for account %s in JSON", InpAccountNumber);
    while(true)
      {
       int accountPos = StringFind(response, "account", currentPos);
       if(accountPos < 0)
+        {
+         PrintFormat("DEBUG: FindNextOpenSignal - No more 'account' keys. Total accounts checked: %d", matchCount);
          return(-1);
+        }
 
       string accountValue = JsonGetRawValue(response, "account", accountPos);
       if(StringLen(accountValue) == 0)
@@ -353,6 +358,9 @@ int FindNextOpenSignal(const string response)
          currentPos = accountPos + 10;
          continue;
         }
+
+      PrintFormat("DEBUG: FindNextOpenSignal - Found account: '%s' (searching for '%s')", accountValue, InpAccountNumber);
+      matchCount++;
 
       if(accountValue == InpAccountNumber)
         {
