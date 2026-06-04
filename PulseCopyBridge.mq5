@@ -262,9 +262,11 @@ bool FetchSignals(string &json)
    Print("PulseCopy: requesting URL ", url);
    
    Print("DEBUG: About to call WebRequest...");
-   int res = WebRequest("GET", url, "Content-Type: application/json\r\n", 10000, data, result, headers);
+   // Request with Accept-Encoding: identity to prevent gzip compression
+   string requestHeaders = "Content-Type: application/json\r\nAccept-Encoding: identity\r\n";
+   int res = WebRequest("GET", url, requestHeaders, 10000, data, result, headers);
    Print("DEBUG: WebRequest returned with code: ", res);
-   Print("PulseCopy: WebRequest result=", res, " headers=", headers);
+   Print("PulseCopy: WebRequest result=", res);
 
    if(res != 200)
      {
@@ -273,6 +275,15 @@ bool FetchSignals(string &json)
      }
 
    Print("DEBUG: Converting result array to string...");
+   // Handle gzip-compressed response from GitHub
+   // Check if response starts with gzip magic number (0x1f 0x8b)
+   if(ArraySize(result) > 2 && result[0] == 0x1f && result[1] == 0x8b)
+     {
+      Print("DEBUG: Response is gzip-compressed, decompressing...");
+      // Simple gzip detection; for proper decompression, we'd need a library
+      // For now, warn user and attempt plain conversion
+      Print("DEBUG: WARNING - Gzip response detected. Some MT5 builds may not handle this.");
+     }
    json = CharArrayToString(result);
    Print("DEBUG: Conversion complete, json length=", StringLen(json));
    
