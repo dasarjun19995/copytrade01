@@ -284,6 +284,20 @@ bool FetchSignals(string &json)
      }
 
    Print("DEBUG: Converting result array to string...");
+   
+   // Check for gzip magic bytes (0x1f 0x8b) before conversion
+   bool isGzipped = false;
+   if(ArraySize(result) > 2 && result[0] == 0x1f && result[1] == 0x8b)
+     {
+      isGzipped = true;
+      Print("PulseCopy: CRITICAL - Response is gzip-compressed!");
+      Print("PulseCopy: MQL5 cannot decompress gzip automatically.");
+      Print("PulseCopy: This is a broker/server configuration issue.");
+      // Skip conversion - return false to trigger retry logic
+      Print("PulseCopy: Skipping this response. Will retry on next timer tick.");
+      return(false);
+     }
+   
    json = CharArrayToString(result);
    Print("DEBUG: Conversion complete, json length=", StringLen(json));
    
@@ -292,8 +306,7 @@ bool FetchSignals(string &json)
      {
       Print("PulseCopy: ERROR - Response does not appear to be valid JSON!");
       Print("PulseCopy: First 50 chars: ", StringSubstr(json, 0, 50));
-      Print("PulseCopy: This usually means the response is gzip-compressed.");
-      Print("PulseCopy: SOLUTION: Contact broker support or try different MT5 build.");
+      Print("PulseCopy: Response may be corrupted or gzip-compressed.");
       return(false);
      }
    
